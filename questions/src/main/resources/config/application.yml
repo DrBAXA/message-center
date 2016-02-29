@@ -1,0 +1,10 @@
+banner:
+    location: classpath:banner.txt
+spring:
+    application:
+        name: questions
+server:
+    port: 8080
+security:
+    basic:
+        enabled: false

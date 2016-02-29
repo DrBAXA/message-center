@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/")
 public class QuestionsController {
 
     @SuppressWarnings("SpringJavaAutowiringInspection")
@@ -30,7 +29,7 @@ public class QuestionsController {
     @Autowired
     private DataDirectoryService dataDirectory;
 
-    @RequestMapping
+    @RequestMapping(value = "/")
     public Iterable<Question> getQuestions(@RequestParam(required = false) List<String> tags) {
         return questionService.getQuestions(tags);
     }
@@ -40,7 +39,7 @@ public class QuestionsController {
         return questionService.getById(id);
     }
 
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(value = "/", method = RequestMethod.POST)
     public void addQuestion(@RequestParam MultipartFile script,
                             @RequestParam DataSourceType dataSourceType,
                             @RequestParam DataType dataType,
