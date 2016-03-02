@@ -1,16 +1,25 @@
-FROM ubuntu
+FROM java:8
 
-RUN mkdir /home/questions
-RUN mkdir /home/questions/data
-RUN mkdir /home/questions/run
+RUN adduser questions
+
+USER questions
+
+RUN mkdir ~/data
+RUN mkdir ~/.config
+RUN mkdir ~/run
 
 ADD target/questions.jar /home/questions/run/questions.jar
-ADD config /home/questions/config
+ADD config /home/questions/.config
+ADD init.sh /home/questions/init.sh
+
+USER root
+
+RUN chown -R questions /home/questions
+RUN chmod +x /home/questions/init.sh
 
 RUN apt-get update
 
-RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
-RUN yes Y | apt-get install r-base r-cran-rserve
-RUN yes Y | apt-get install nodejs
+USER questions
 
-ENTRYPOINT ["java -jar /home/questions/run/questions.jar"]
+ENTRYPOINT ["/home/questions/init.sh"]
+

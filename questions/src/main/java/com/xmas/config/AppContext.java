@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -62,30 +63,33 @@ public class AppContext {
     @Autowired
     ApplicationContext applicationContext;
 
+    @Autowired
+    Environment environment;
+
     public static void main(String[] args) {
         SpringApplication.run(AppContext.class, args);
     }
 
-    private Properties hibernateProperties(){
+    private Properties hibernateProperties() {
         Properties properties = new Properties();
-        properties.put("hibernate.show_sql",showSql);
-        properties.put("hibernate.dialect",dialect);
-        properties.put("hibernate.hbm2ddl.auto",hbm2ddl);
+        properties.put("hibernate.show_sql", showSql);
+        properties.put("hibernate.dialect", dialect);
+        properties.put("hibernate.hbm2ddl.auto", hbm2ddl);
         return properties;
     }
 
     @Bean
-    public DataSource dataSource(){
+    public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(driver);
-        dataSource.setUrl(host);
+        dataSource.setUrl(getDatabaseServerLocation());
         dataSource.setUsername(dbUser);
         dataSource.setPassword(dbPassword);
         return dataSource;
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(){
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
         entityManagerFactoryBean.setDataSource(dataSource());
         entityManagerFactoryBean.setPackagesToScan("com/xmas/entity", "com/xmas/dao");
@@ -96,7 +100,7 @@ public class AppContext {
     }
 
     @Bean
-    public JpaTransactionManager transactionManager(){
+    public JpaTransactionManager transactionManager() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
         return transactionManager;
@@ -105,15 +109,25 @@ public class AppContext {
     @Bean
     public static PropertyPlaceholderConfigurer propertyConfigurer() throws IOException {
         PropertyPlaceholderConfigurer props = new PropertyPlaceholderConfigurer();
-        props.setLocations(new FileSystemResource(System.getProperty("user.home")+ "/.pushmessages/properties/app.properties"),
-                           new FileSystemResource(System.getProperty("user.home")+ "/.pushmessages/properties/jdbc.properties"),
-                           new FileSystemResource(System.getProperty("user.home")+ "/.pushmessages/properties/hibernate.properties"));
+        props.setLocations(new FileSystemResource(System.getProperty("user.home") + "/.config/app.properties"),
+                new FileSystemResource(System.getProperty("user.home") + "/.config/jdbc.properties"),
+                new FileSystemResource(System.getProperty("user.home") + "/.config/hibernate.properties"));
         return props;
     }
 
     @Bean
-    public EntityHelper<Answer, Question> answerHelper(){
+    public EntityHelper<Answer, Question> answerHelper() {
         return new EntityHelper<>(Answer.class, applicationContext);
+    }
+
+    private String getDatabaseServerLocation() {
+        String server = environment.getProperty("DATABASE_SERVER");
+        if (server != null && !server.isEmpty()) {
+            System.out.println(server);
+            return "jdbc:mysql://" + server + "/questions?characterEncoding=utf8";
+        }else {
+            return host;
+        }
     }
 
 }
